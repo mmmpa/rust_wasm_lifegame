@@ -15,6 +15,7 @@ export default function Container (props) {
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [notf, setNotf] = useState(false);
+  const [pausing, setPausing] = useState(false);
 
   useEffect(() => {
     canvas && setContext(canvas.getContext('2d'));
@@ -77,10 +78,34 @@ export default function Container (props) {
     setLoading(true);
     setData('');
     setData(await fileToText(file));
+    setPausing(false);
+  }
+
+  function pause (e) {
+    setPausing(true);
+    clearInterval(playId);
+  }
+
+  function resume () {
+    setPlayId(
+      setInterval(
+        () => {
+          wasm.step();
+          wasm.draw(context);
+        },
+        delay,
+      ),
+    );
   }
 
   function submit (e) {
     e.preventDefault();
+
+    if (pausing) {
+      resume();
+      setPausing(false);
+      return;
+    }
 
     const [ok, message] = wasm.load(data);
 
@@ -123,7 +148,7 @@ export default function Container (props) {
         <form className='header__form' onSubmit={e => submit(e)}>
           <ul className='header__input'>
             <li className='header__input__item'>
-              <label htmlFor='attachments' className={labelClassNames}>
+              <label htmlFor='attachments' className={labelClassNames} onClick={pause}>
                 <i className='fas fa-upload mr-1' />
                 Load RLE
               </label>
@@ -131,7 +156,7 @@ export default function Container (props) {
             <li className='header__input__item'>
               <button type='submit' className='btn start_button' disabled={loading}>
                 <i className='fas fa-play-circle mr-1' />
-                Start
+                {pausing ? 'Resume' : 'Start'}
               </button>
               {notification}
             </li>

@@ -11,7 +11,6 @@ use std::sync::{Arc, RwLock};
 use lifegame::rle::Rle;
 use lifegame::game::Game;
 use std::string::ToString;
-use wasm_bindgen::prelude::*;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "wee_alloc")] {
@@ -122,7 +121,7 @@ pub fn reload() -> Result<(), String> {
 }
 
 #[wasm_bindgen]
-pub fn draw(context: web_sys::CanvasRenderingContext2d) -> ReturningResult {
+pub fn draw(context: web_sys::CanvasRenderingContext2d) {
     let (width, height, lives) = {
         let container = LOCKER.read().unwrap();
         let game = &container.game.as_ref().unwrap();
@@ -133,10 +132,16 @@ pub fn draw(context: web_sys::CanvasRenderingContext2d) -> ReturningResult {
     let bitmap = &mut container.bitmap;
 
     for (i, b) in lives.iter().enumerate() {
+        let pos = i * 4 + 3;
         if *b {
-            bitmap[i * 4 + 3] = 255;
+            bitmap[pos] = 255;
         } else {
-            bitmap[i * 4 + 3] = 0;
+            let now = bitmap[pos];
+            if now <= 220 {
+                bitmap[pos] = 0;
+            } else{
+                bitmap[pos] -= 220;
+            }
         }
     }
 
@@ -144,8 +149,6 @@ pub fn draw(context: web_sys::CanvasRenderingContext2d) -> ReturningResult {
         Ok(img) => { context.put_image_data(&img, 0.0, 0.0).unwrap(); },
         Err(_) => {}
     };
-
-    js_success_result()
 }
 
 #[wasm_bindgen]
