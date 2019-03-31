@@ -1,8 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import glob from 'glob';
 import exec from './exec';
-
 
 function start () {
   const {
@@ -22,22 +20,23 @@ async function deployment ({ bucketName, fileDir }) {
 
   await clearBucket(bucketName);
 
-  fs
+  const puts = fs
     .readdirSync(src)
     .filter(f => f.match(/.gz$/) || f.match(/.html$/))
-    .forEach(f => {
+    .map(f => {
       const nextName = f.replace(/.gz$/, '');
-      const nextPath = path.join(tmp, nextName)
+      const nextPath = path.join(tmp, nextName);
 
       fs.copyFileSync(
         path.join(src, f),
         nextPath,
       );
 
-      f.match(/.gz$/)
+      return f.match(/.gz$/)
         ? put(bucketName, nextPath, nextName, detectType(nextName), 'gzip')
         : put(bucketName, nextPath, nextName, detectType(nextName), '');
     });
+  await Promise.all(puts);
 }
 
 function detectType (name) {
@@ -54,7 +53,6 @@ function detectType (name) {
     return '';
   }
 }
-
 
 function build () {
   return exec({}, `yarn build`);
