@@ -5,3 +5,5 @@ bin/
 pkg/
 wasm-pack.log
 dist/
+*local*
+tmp

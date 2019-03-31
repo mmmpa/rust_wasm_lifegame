@@ -30,3 +30,46 @@ jobs:
             - "./target"
             - "./dist"
             - "./www/node_modules"
+            - "./deploy/node_modules"
+
+  deploy:
+    docker:
+      - image: mmmpa/rust_wasm_node:latest
+
+    steps:
+      - run:
+          name: Update PATH and Define Environment Variable at Runtime
+          command: |
+            echo 'export PATH=$PATH:$HOME/node/bin:$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin' >> $BASH_ENV
+            source $BASH_ENV
+
+      - checkout
+      - restore_cache:
+          key: project-cache
+
+      - run: cargo test
+      - run: wasm-pack build --release
+
+      - run: cd deployment && yarn install
+      - run: cd deployment && yarn deploy
+
+      - save_cache:
+          key: project-cache
+          paths:
+            - "~/.cargo"
+            - "./target"
+            - "./dist"
+            - "./www/node_modules"
+            - "./deploy/node_modules"
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master

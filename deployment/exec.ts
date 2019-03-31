@@ -1,6 +1,6 @@
 import { exec } from 'child_process';
 
-export default function (option, cmd): Promise<void> {
+export default function (option, cmd): Promise<string> {
   console.log('\u001b[36mcommand:\u001b[0m', cmd);
 
   return new Promise((resolve, reject) => {
@@ -13,7 +13,7 @@ export default function (option, cmd): Promise<void> {
       console.log(stdout);
       console.log(stderr);
 
-      resolve(stdout.replace(/\n$/g, ''));
+      resolve(stdout.toString().replace(/\n$/g, ''));
     });
   });
 }

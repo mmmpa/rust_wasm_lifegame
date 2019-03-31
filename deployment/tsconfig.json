@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "noImplicitThis": true,
+    "esModuleInterop": true,
+    "typeRoots": [
+      "./node_modules/@types",
+    ],
+    "lib": [
+      "dom",
+      "es5",
+      "es2015.promise",
+      "es2017"
+    ]
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}
