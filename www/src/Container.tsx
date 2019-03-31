@@ -37,6 +37,7 @@ export default function Container (props) {
         text: message,
         type: 'error',
       });
+      setLoading(false);
       return;
     }
 
@@ -89,6 +90,7 @@ export default function Container (props) {
         text: message,
         type: 'error',
       });
+      setLoading(false);
       return;
     }
 

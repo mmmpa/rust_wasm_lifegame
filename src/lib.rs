@@ -3,21 +3,15 @@ extern crate lazy_static;
 extern crate lifegame;
 extern crate web_sys;
 
-use wasm_bindgen::Clamped;
-
 mod utils;
 
-use cfg_if::cfg_if;
+use wasm_bindgen::Clamped;
 use wasm_bindgen::prelude::*;
 use std::sync::{Arc, RwLock};
 use lifegame::rle::Rle;
 use lifegame::game::Game;
-use std::f64;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
 use std::string::ToString;
-use wasm_bindgen::convert::{IntoWasmAbi, Stack};
-use wasm_bindgen::describe::WasmDescribe;
+use wasm_bindgen::prelude::*;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "wee_alloc")] {
@@ -26,10 +20,18 @@ cfg_if::cfg_if! {
     }
 }
 
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+}
+
 struct Container {
     margin: usize,
     src: String,
     game: Option<Game>,
+    bitmap: Vec<u8>,
 }
 
 lazy_static! {
@@ -38,6 +40,7 @@ lazy_static! {
             margin: 100,
             src: "".to_string(),
             game: None,
+            bitmap: vec![],
         };
         Arc::new(RwLock::new(container))
     };
@@ -97,9 +100,9 @@ pub fn expand(canvas: web_sys::Element, margin: usize) -> ReturningResult {
     let ww = (game.width * 2).to_string();
     let hh = (game.height * 2).to_string();
 
-    canvas.set_attribute("width", &w);
-    canvas.set_attribute("height", &h);
-    canvas.set_attribute("style", &format!("width: {}px; height: {}px", &ww, &hh));
+    canvas.set_attribute("width", &w).unwrap();
+    canvas.set_attribute("height", &h).unwrap();
+    canvas.set_attribute("style", &format!("width: {}px; height: {}px", &ww, &hh)).unwrap();
 
     result
 }
@@ -112,6 +115,7 @@ pub fn reload() -> Result<(), String> {
     };
     let game = Game::new(w, h, &map);
 
+    container.bitmap = vec![0; &game.lives().len() * 4];
     container.game = Some(game);
 
     Ok(())
@@ -119,27 +123,26 @@ pub fn reload() -> Result<(), String> {
 
 #[wasm_bindgen]
 pub fn draw(context: web_sys::CanvasRenderingContext2d) -> ReturningResult {
-    let container = LOCKER.read().unwrap();
-    let game = &container.game.as_ref().unwrap();
-    let lives = game.lives();
-    let mut colors = vec![0; lives.len() * 4];
+    let (width, height, lives) = {
+        let container = LOCKER.read().unwrap();
+        let game = &container.game.as_ref().unwrap();
+        (game.width, game.height, game.lives())
+    };
+
+    let mut container = LOCKER.write().unwrap();
+    let bitmap = &mut container.bitmap;
 
     for (i, b) in lives.iter().enumerate() {
         if *b {
-            colors[i * 4 + 3] = 255;
+            bitmap[i * 4 + 3] = 255;
+        } else {
+            bitmap[i * 4 + 3] = 0;
         }
     }
 
-    context.scale(2.0, 2.0);
-
-    match web_sys::ImageData::new_with_u8_clamped_array_and_sh(Clamped(&mut colors[..]), game.width as u32, game.height as u32) {
-        Ok(img) => {
-            match context.put_image_data(&img, 0.0, 0.0) {
-                Ok(img) => {},
-                Err(e) => {}
-            };
-        },
-        Err(e) => {}
+    match web_sys::ImageData::new_with_u8_clamped_array_and_sh(Clamped(&mut container.bitmap[..]), width as u32, height as u32) {
+        Ok(img) => { context.put_image_data(&img, 0.0, 0.0).unwrap(); },
+        Err(_) => {}
     };
 
     js_success_result()
