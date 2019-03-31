@@ -139,7 +139,7 @@ pub fn draw(context: web_sys::CanvasRenderingContext2d) {
             let now = bitmap[pos];
             if now <= 220 {
                 bitmap[pos] = 0;
-            } else{
+            } else {
                 bitmap[pos] -= 220;
             }
         }
