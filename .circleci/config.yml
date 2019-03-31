@@ -19,7 +19,7 @@ jobs:
       - run: wasm-pack build --release
 
       - run: cd www && yarn install
-      - run: ln -s pkg/node_modules www/node_modules
+      - run: cd pkg && ln -s ../www/node_modules node_modules
       - run: cd www && yarn lint
       - run: cd www && yarn build
 
