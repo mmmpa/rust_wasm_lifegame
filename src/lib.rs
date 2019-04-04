@@ -11,6 +11,7 @@ use std::sync::{Arc, RwLock};
 use lifegame::rle::Rle;
 use lifegame::game::Game;
 use std::string::ToString;
+use core::borrow::BorrowMut;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "wee_alloc")] {
@@ -131,21 +132,25 @@ pub fn draw(context: web_sys::CanvasRenderingContext2d) {
     let mut container = LOCKER.write().unwrap();
     let bitmap = &mut container.bitmap;
 
-    for (i, b) in lives.iter().enumerate() {
-        let pos = i * 4 + 3;
-        if *b {
-            bitmap[pos] = 255;
-        } else {
-            let now = bitmap[pos];
-            if now <= 220 {
-                bitmap[pos] = 0;
-            } else {
-                bitmap[pos] -= 220;
-            }
-        }
-    }
+    bitmap
+      .iter_mut()
+      .skip(3)
+      .step_by(4)
+      .borrow_mut()
+      .zip(lives.iter())
+      .for_each(|(b, live)| {
+          if *live {
+              *b = 255
+          } else {
+              *b = 0
+          }
+      });
 
-    match web_sys::ImageData::new_with_u8_clamped_array_and_sh(Clamped(&mut container.bitmap[..]), width as u32, height as u32) {
+    match web_sys::ImageData::new_with_u8_clamped_array_and_sh(
+        Clamped(&mut bitmap[..]),
+        width as u32,
+        height as u32,
+    ) {
         Ok(img) => { context.put_image_data(&img, 0.0, 0.0).unwrap(); },
         Err(_) => {}
     };
