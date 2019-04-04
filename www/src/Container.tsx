@@ -171,7 +171,7 @@ export default function Container (props) {
             </li>
           </ul>
           <div className='header__hidden'>
-            <input type='file' id='attachments' onChange={onAttach} />
+            <input type='file' id='attachments' accept='.rle' onChange={onAttach} />
           </div>
         </form>
       </div>
