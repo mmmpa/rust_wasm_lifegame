@@ -169,6 +169,11 @@ export default function Container (props) {
               <input className='header__input__num' type='text' value={delay} onChange={e => setDelay(+e.target.value)} />
               <span>ms</span>
             </li>
+            <li className='header__input__item'>
+              <a href='https://github.com/mmmpa'>
+                <i className='fab fa-github mr-1' />
+                mmmpa
+              </a>            </li>
           </ul>
           <div className='header__hidden'>
             <input type='file' id='attachments' accept='.rle' onChange={onAttach} />

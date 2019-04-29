@@ -24,13 +24,16 @@ jobs:
       - run: cd www && yarn build
 
       - save_cache:
-          key: project-cache
+          key: project-cache-{{ checksum "Cargo.lock" }}-{{ checksum "www/package-lock.json" }}
           paths:
             - "~/.cargo"
-            - "./target"
-            - "./dist"
             - "./www/node_modules"
             - "./deploy/node_modules"
+
+      - save_cache:
+          key: project-cache-{{ .Revision }}
+          paths:
+            - "./dist"
 
   deploy:
     docker:
@@ -45,19 +48,10 @@ jobs:
 
       - checkout
       - restore_cache:
-          key: project-cache
+          key: project-cache-{{ .Revision }}
 
       - run: cd deployment && yarn install
       - run: cd deployment && yarn deploy
-
-      - save_cache:
-          key: project-cache
-          paths:
-            - "~/.cargo"
-            - "./target"
-            - "./dist"
-            - "./www/node_modules"
-            - "./deploy/node_modules"
 
 workflows:
   version: 2
